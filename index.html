@@ -261,13 +261,14 @@
 </div>
 
 <script>
+// Plant Data: Adjust target and deployed values to automatically update the monitored %
 const plants = [
-  {id:'p1', name:'Al-Minya Plant', loc:'Upper Egypt', machines:26, status:'crit', alerts:2},
-  {id:'p2', name:'Suez Terminal', loc:'Suez Governorate', machines:19, status:'watch', alerts:3},
-  {id:'p3', name:'Assiut Works', loc:'Assiut', machines:24, status:'ok', alerts:0},
-  {id:'p4', name:'Beni Suef Plant', loc:'Beni Suef', machines:31, status:'watch', alerts:4},
-  {id:'p5', name:'Qena Facility', loc:'Qena', machines:22, status:'crit', alerts:1},
-  {id:'p6', name:'Sohag Site', loc:'Sohag', machines:20, status:'ok', alerts:0},
+  {id:'p1', name:'Al-Minya Plant', loc:'Upper Egypt', machines:26, status:'crit', alerts:2, deployed:26, target:26},
+  {id:'p2', name:'Suez Terminal', loc:'Suez Governorate', machines:19, status:'watch', alerts:3, deployed:15, target:19},
+  {id:'p3', name:'Assiut Works', loc:'Assiut', machines:24, status:'ok', alerts:0, deployed:24, target:24},
+  {id:'p4', name:'Beni Suef Plant', loc:'Beni Suef', machines:31, status:'watch', alerts:4, deployed:28, target:31},
+  {id:'p5', name:'Qena Facility', loc:'Qena', machines:22, status:'crit', alerts:1, deployed:11, target:22},
+  {id:'p6', name:'Sohag Site', loc:'Sohag', machines:20, status:'ok', alerts:0, deployed:18, target:20},
 ];
 
 const machinesByPlant = {
@@ -301,23 +302,28 @@ function statusColorVar(s){ return s === 'crit' ? 'var(--crit)' : s === 'watch' 
 
 function renderPlants(){
   const grid = document.getElementById('plant-grid');
-  grid.innerHTML = plants.map(p => `
-    <div class="plant-card" onclick="showPlant('${p.id}')">
-      <div class="status-bar" style="background:${statusColorVar(p.status)}"></div>
-      <div class="plant-top">
-        <div>
-          <div class="plant-name">${p.name}</div>
-          <div class="plant-loc">${p.loc}</div>
+  grid.innerHTML = plants.map(p => {
+    // Math logic: Calculate percentage based on deployed and target fields
+    const pct = Math.round((p.deployed / p.target) * 100);
+    
+    return `
+      <div class="plant-card" onclick="showPlant('${p.id}')">
+        <div class="status-bar" style="background:${statusColorVar(p.status)}"></div>
+        <div class="plant-top">
+          <div>
+            <div class="plant-name">${p.name}</div>
+            <div class="plant-loc">${p.loc}</div>
+          </div>
+          <div class="badge ${p.status}">${p.status === 'crit' ? 'Critical' : p.status === 'watch' ? 'Watch' : 'Healthy'}</div>
         </div>
-        <div class="badge ${p.status}">${p.status === 'crit' ? 'Critical' : p.status === 'watch' ? 'Watch' : 'Healthy'}</div>
+        <div class="plant-meta">
+          <div>Machines <br><b>${p.machines}</b></div>
+          <div>Monitored <br><b>${pct}%</b> <span style="font-size:10px; color:var(--text-faint);">(${p.deployed}/${p.target})</span></div>
+        </div>
+        <div class="plant-alerts ${p.alerts === 0 ? 'none' : ''}">${p.alerts > 0 ? '&#9888; ' + p.alerts + ' active alert' + (p.alerts>1?'s':'') : 'No active alerts'}</div>
       </div>
-      <div class="plant-meta">
-        <div>Machines <br><b>${p.machines}</b></div>
-        <div>Monitored <br><b>100%</b></div>
-      </div>
-      <div class="plant-alerts ${p.alerts === 0 ? 'none' : ''}">${p.alerts > 0 ? '&#9888; ' + p.alerts + ' active alert' + (p.alerts>1?'s':'') : 'No active alerts'}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function showFleet(){
