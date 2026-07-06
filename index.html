@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>M-Predict V3 — Smart Operations</title>
+<title>M-Predict V3 — Fleet Health</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -171,7 +171,7 @@
   <div class="brand">
     <div class="brand-mark">M</div>
     <div class="brand-name">M-Predict V3</div>
-    <div class="brand-sub">Smart Operations</div>
+    <div class="brand-sub">Fleet Health Monitoring</div>
   </div>
   <div class="crumbs" id="crumbs"></div>
   <div class="topbar-right">
@@ -181,7 +181,6 @@
 
 <div class="wrap">
 
-  <!-- FLEET VIEW -->
   <div id="view-fleet">
     <div class="summary-strip">
       <div class="sum-card"><div class="sum-label">Plants</div><div class="sum-value">6</div></div>
@@ -194,14 +193,12 @@
     <div class="plant-grid" id="plant-grid"></div>
   </div>
 
-  <!-- PLANT VIEW -->
   <div id="view-plant" class="hidden">
     <span class="back-link" onclick="showFleet()">&larr; All Plants</span>
     <h2 class="section-title" id="plant-heading">Machines</h2>
     <div class="machine-list" id="machine-list"></div>
   </div>
 
-  <!-- MACHINE DETAIL VIEW -->
   <div id="view-machine" class="hidden">
     <span class="back-link" onclick="showPlant()">&larr; Back to plant</span>
     <div class="detail-grid">
@@ -265,36 +262,36 @@
 
 <script>
 const plants = [
-  {id:'p1', name:'SOK', loc:'Egypt', machines:26, status:'crit', alerts:2},
-  {id:'p2', name:'HV', loc:'Germany', machines:19, status:'watch', alerts:3},
-  {id:'p3', name:'CLD', loc:'UK', machines:24, status:'ok', alerts:0},
-  {id:'p4', name:'KUJ', loc:'Poland', machines:31, status:'watch', alerts:4},
-  {id:'p5', name:'AE', loc:'Romania', machines:22, status:'crit', alerts:1},
-  {id:'p6', name:'MG', loc:'Argentina', machines:20, status:'ok', alerts:0},
+  {id:'p1', name:'Al-Minya Plant', loc:'Upper Egypt', machines:26, status:'crit', alerts:2},
+  {id:'p2', name:'Suez Terminal', loc:'Suez Governorate', machines:19, status:'watch', alerts:3},
+  {id:'p3', name:'Assiut Works', loc:'Assiut', machines:24, status:'ok', alerts:0},
+  {id:'p4', name:'Beni Suef Plant', loc:'Beni Suef', machines:31, status:'watch', alerts:4},
+  {id:'p5', name:'Qena Facility', loc:'Qena', machines:22, status:'crit', alerts:1},
+  {id:'p6', name:'Sohag Site', loc:'Sohag', machines:20, status:'ok', alerts:0},
 ];
 
 const machinesByPlant = {
   p1: [
-    {name:'Kiln Drive Motor #1', type:'Rotary Kiln — Drive Train', status:'crit', rul:18, rulPct:22, defect:'Bearing outer-race spall'},
-    {name:'Raw Mill Fan', type:'Vertical Roller Mill', status:'watch', rul:41, rulPct:55, defect:'Imbalance — moderate'},
-    {name:'Cooler Grate Drive', type:'Clinker Cooler', status:'ok', rul:92, rulPct:88, defect:'None detected'},
-    {name:'Preheater Fan #2', type:'ID Fan', status:'watch', rul:37, rulPct:48, defect:'Misalignment trend'},
+    {name:'Kiln Drive Motor #1', type:'Rotary Kiln — Drive Train', status:'crit', rul:18, rulPct:22, defect:'Bearing outer-race spall', icon:'⚙️'},
+    {name:'Raw Mill Fan', type:'Vertical Roller Mill', status:'watch', rul:41, rulPct:55, defect:'Imbalance — moderate', icon:'🌀'},
+    {name:'Cooler Grate Drive', type:'Clinker Cooler', status:'ok', rul:92, rulPct:88, defect:'None detected', icon:'📦'},
+    {name:'Preheater Fan #2', type:'ID Fan', status:'watch', rul:37, rulPct:48, defect:'Misalignment trend', icon:'🌀'},
   ],
   p2: [
-    {name:'Cement Mill Gearbox', type:'Ball Mill', status:'watch', rul:29, rulPct:38, defect:'Gear mesh wear'},
-    {name:'Coal Mill Motor', type:'Vertical Roller Mill', status:'ok', rul:120, rulPct:95, defect:'None detected'},
+    {name:'Cement Mill Gearbox', type:'Ball Mill', status:'watch', rul:29, rulPct:38, defect:'Gear mesh wear', icon:'⚙️'},
+    {name:'Coal Mill Motor', type:'Vertical Roller Mill', status:'ok', rul:120, rulPct:95, defect:'None detected', icon:'⚡'},
   ],
   p3: [
-    {name:'Kiln Support Roller', type:'Rotary Kiln', status:'ok', rul:150, rulPct:97, defect:'None detected'},
+    {name:'Kiln Support Roller', type:'Rotary Kiln', status:'ok', rul:150, rulPct:97, defect:'None detected', icon:'🚜'},
   ],
   p4: [
-    {name:'Baghouse Fan', type:'Dust Collection', status:'watch', rul:33, rulPct:42, defect:'Bearing temp rising'},
+    {name:'Baghouse Fan', type:'Dust Collection', status:'watch', rul:33, rulPct:42, defect:'Bearing temp rising', icon:'🌀'},
   ],
   p5: [
-    {name:'Raw Mill Motor', type:'Vertical Roller Mill', status:'crit', rul:9, rulPct:11, defect:'Winding insulation degradation'},
+    {name:'Raw Mill Motor', type:'Vertical Roller Mill', status:'crit', rul:9, rulPct:11, defect:'Winding insulation degradation', icon:'⚡'},
   ],
   p6: [
-    {name:'Packer Drive', type:'Cement Packer', status:'ok', rul:180, rulPct:99, defect:'None detected'},
+    {name:'Packer Drive', type:'Cement Packer', status:'ok', rul:180, rulPct:99, defect:'None detected', icon:'📦'},
   ],
 };
 
@@ -342,9 +339,12 @@ function showPlant(id){
   const list = machinesByPlant[currentPlant] || [];
   document.getElementById('machine-list').innerHTML = list.map((m, idx) => `
     <div class="machine-row" onclick="showMachine(${idx})">
-      <div>
-        <div class="m-name">${m.name}</div>
-        <div class="m-type">${m.type}</div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 20px; background: var(--panel-2); padding: 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;">${m.icon || '⚙️'}</span>
+        <div>
+          <div class="m-name">${m.name}</div>
+          <div class="m-type">${m.type}</div>
+        </div>
       </div>
       <div class="status-pill"><span class="dot ${m.status}"></span>${m.status === 'crit' ? 'Critical' : m.status === 'watch' ? 'Watch' : 'Healthy'}</div>
       <div>
