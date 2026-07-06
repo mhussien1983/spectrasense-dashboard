@@ -261,7 +261,7 @@
 </div>
 
 <script>
-// Plant Data: Adjust target and deployed values to automatically update the monitored %
+// Plant Data: Restored to original layout names with deploy/target configurations
 const plants = [
   {id:'p1', name:'Al-Minya Plant', loc:'Upper Egypt', machines:26, status:'crit', alerts:2, deployed:26, target:26},
   {id:'p2', name:'Suez Terminal', loc:'Suez Governorate', machines:19, status:'watch', alerts:3, deployed:15, target:19},
@@ -303,7 +303,7 @@ function statusColorVar(s){ return s === 'crit' ? 'var(--crit)' : s === 'watch' 
 function renderPlants(){
   const grid = document.getElementById('plant-grid');
   grid.innerHTML = plants.map(p => {
-    // Math logic: Calculate percentage based on deployed and target fields
+    // Dynamic math computation for target deployments
     const pct = Math.round((p.deployed / p.target) * 100);
     
     return `
