@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SpectraSense — Fleet Health</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #0E1318;
+    --panel: #161C24;
+    --panel-2: #1D242E;
+    --border: #2A323D;
+    --text: #E7ECF2;
+    --text-dim: #8A94A3;
+    --text-faint: #5C6675;
+    --ok: #35B07A;
+    --ok-bg: rgba(53,176,122,0.12);
+    --watch: #E0A72E;
+    --watch-bg: rgba(224,167,46,0.12);
+    --crit: #E2544A;
+    --crit-bg: rgba(226,84,74,0.13);
+    --kiln: #D9772A;
+    --accent: #4FA6D9;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+
+  /* Top bar */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel);
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:28px; height:28px; border-radius:6px;
+    background:linear-gradient(135deg, var(--accent), var(--kiln));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; color:#0E1318;
+  }
+  .brand-name{font-weight:600; font-size:15px; letter-spacing:0.2px;}
+  .brand-sub{font-size:11px; color:var(--text-faint); margin-left:8px;}
+  .crumbs{font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:6px;}
+  .crumbs .active{color:var(--text); font-weight:500;}
+  .crumbs .sep{color:var(--text-faint);}
+  .crumbs span{cursor:pointer;}
+  .topbar-right{display:flex; align-items:center; gap:18px; font-size:12px; color:var(--text-dim);}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px; box-shadow:0 0 0 3px var(--ok-bg);}
+
+  .wrap{max-width:1240px; margin:0 auto; padding:22px 24px 60px;}
+
+  /* Summary strip */
+  .summary-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px;
+  }
+  .sum-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px;
+  }
+  .sum-label{font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px;}
+  .sum-value{font-size:24px; font-weight:600; font-family:'IBM Plex Mono';}
+  .sum-value.crit{color:var(--crit);}
+  .sum-value.watch{color:var(--watch);}
+  .sum-value.ok{color:var(--ok);}
+
+  h2.section-title{font-size:14px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin:26px 0 12px;}
+
+  /* Fleet grid (plants) */
+  .plant-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;}
+  .plant-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:18px; cursor:pointer; transition:border-color .15s, transform .15s;
+    position:relative; overflow:hidden;
+  }
+  .plant-card:hover{border-color:var(--accent); transform:translateY(-2px);}
+  .plant-card .status-bar{position:absolute; left:0; top:0; bottom:0; width:4px;}
+  .plant-top{display:flex; justify-content:space-between; align-items:flex-start;}
+  .plant-name{font-size:16px; font-weight:600;}
+  .plant-loc{font-size:12px; color:var(--text-faint); margin-top:2px;}
+  .badge{
+    font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px;
+  }
+  .badge.ok{background:var(--ok-bg); color:var(--ok);}
+  .badge.watch{background:var(--watch-bg); color:var(--watch);}
+  .badge.crit{background:var(--crit-bg); color:var(--crit);}
+  .plant-meta{display:flex; gap:18px; margin-top:16px; font-size:12px; color:var(--text-dim);}
+  .plant-meta b{color:var(--text); font-family:'IBM Plex Mono'; font-weight:600; font-size:13px;}
+  .plant-alerts{margin-top:12px; font-size:12px; color:var(--crit); display:flex; align-items:center; gap:6px;}
+  .plant-alerts.none{color:var(--text-faint);}
+
+  /* Machine list */
+  .machine-list{display:flex; flex-direction:column; gap:8px;}
+  .machine-row{
+    display:grid; grid-template-columns: 1.6fr 1fr 1.4fr 1fr 30px;
+    align-items:center; gap:16px;
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:13px 18px; cursor:pointer; transition:border-color .15s;
+  }
+  .machine-row:hover{border-color:var(--accent);}
+  .m-name{font-weight:600; font-size:14px;}
+  .m-type{font-size:11px; color:var(--text-faint); margin-top:2px;}
+  .status-pill{display:flex; align-items:center; gap:7px; font-size:12px; font-weight:500;}
+  .dot{width:8px; height:8px; border-radius:50%;}
+  .dot.ok{background:var(--ok);} .dot.watch{background:var(--watch);} .dot.crit{background:var(--crit);}
+
+  /* RUL runway (signature element) */
+  .rul-runway{position:relative; height:8px; border-radius:4px; background:var(--panel-2); overflow:visible;}
+  .rul-track{position:absolute; inset:0; border-radius:4px;
+    background:linear-gradient(90deg, var(--crit) 0%, var(--watch) 45%, var(--ok) 100%);
+    opacity:0.25;
+  }
+  .rul-marker{
+    position:absolute; top:50%; width:3px; height:16px; background:var(--text);
+    transform:translate(-50%,-50%); border-radius:2px;
+  }
+  .rul-label{font-size:11px; color:var(--text-dim); margin-top:6px; font-family:'IBM Plex Mono';}
+  .rul-label b{color:var(--text);}
+
+  .defect-tag{font-size:11px; color:var(--text-dim);}
+  .chevron{color:var(--text-faint); font-size:16px; text-align:right;}
+
+  /* Machine detail */
+  .detail-grid{display:grid; grid-template-columns: 1.3fr 1fr; gap:16px;}
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px;}
+  .panel-title{font-size:13px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:14px;}
+
+  .chart-area{height:180px; display:flex; align-items:flex-end; gap:3px; padding-top:10px;}
+  .bar{flex:1; background:linear-gradient(180deg, var(--accent), rgba(79,166,217,0.15)); border-radius:2px 2px 0 0;}
+  .bar.hi{background:linear-gradient(180deg, var(--crit), rgba(226,84,74,0.15));}
+  .axis-labels{display:flex; justify-content:space-between; font-size:10px; color:var(--text-faint); margin-top:6px;}
+
+  .rul-hero{text-align:center; padding:18px 0 8px;}
+  .rul-hero .value{font-size:44px; font-weight:700; font-family:'IBM Plex Mono'; color:var(--watch);}
+  .rul-hero .unit{font-size:13px; color:var(--text-dim); margin-top:2px;}
+  .rul-runway-big{position:relative; height:14px; border-radius:7px; background:var(--panel-2); margin:18px 0 8px;}
+  .rul-marker-big{position:absolute; top:50%; width:4px; height:26px; background:var(--text); transform:translate(-50%,-50%); border-radius:2px;}
+  .rul-scale{display:flex; justify-content:space-between; font-size:10px; color:var(--text-faint);}
+
+  .defect-card{background:var(--crit-bg); border:1px solid rgba(226,84,74,0.35); border-radius:10px; padding:14px 16px; margin-bottom:12px;}
+  .defect-card .dt{font-size:13px; font-weight:600; color:var(--crit); margin-bottom:4px;}
+  .defect-card .dd{font-size:12px; color:var(--text-dim); line-height:1.5;}
+  .confidence{font-size:11px; color:var(--text-faint); margin-top:8px;}
+
+  .rec-card{background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start;}
+  .rec-icon{width:26px; height:26px; border-radius:6px; background:rgba(79,166,217,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;}
+  .rec-title{font-size:13px; font-weight:600; margin-bottom:3px;}
+  .rec-body{font-size:12px; color:var(--text-dim); line-height:1.5;}
+  .rec-priority{font-size:10px; text-transform:uppercase; letter-spacing:0.4px; color:var(--kiln); font-weight:600; margin-top:6px;}
+
+  .sensor-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;}
+  .sensor-mini{background:var(--panel-2); border-radius:8px; padding:10px 12px;}
+  .sensor-mini .sl{font-size:10px; color:var(--text-faint); text-transform:uppercase;}
+  .sensor-mini .sv{font-size:16px; font-weight:600; font-family:'IBM Plex Mono'; margin-top:2px;}
+  .sensor-mini .sv.warn{color:var(--watch);}
+
+  .back-link{font-size:12px; color:var(--accent); cursor:pointer; margin-bottom:14px; display:inline-block;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">S</div>
+    <div class="brand-name">SpectraSense</div>
+    <div class="brand-sub">Fleet Health Monitoring</div>
+  </div>
+  <div class="crumbs" id="crumbs"></div>
+  <div class="topbar-right">
+    <div><span class="live-dot"></span>Live · updated 2 min ago</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- FLEET VIEW -->
+  <div id="view-fleet">
+    <div class="summary-strip">
+      <div class="sum-card"><div class="sum-label">Plants</div><div class="sum-value">6</div></div>
+      <div class="sum-card"><div class="sum-label">Machines Monitored</div><div class="sum-value">142</div></div>
+      <div class="sum-card"><div class="sum-label">Critical Alerts</div><div class="sum-value crit">3</div></div>
+      <div class="sum-card"><div class="sum-label">Watch List</div><div class="sum-value watch">11</div></div>
+    </div>
+
+    <h2 class="section-title">Plants</h2>
+    <div class="plant-grid" id="plant-grid"></div>
+  </div>
+
+  <!-- PLANT VIEW -->
+  <div id="view-plant" class="hidden">
+    <span class="back-link" onclick="showFleet()">&larr; All Plants</span>
+    <h2 class="section-title" id="plant-heading">Machines</h2>
+    <div class="machine-list" id="machine-list"></div>
+  </div>
+
+  <!-- MACHINE DETAIL VIEW -->
+  <div id="view-machine" class="hidden">
+    <span class="back-link" onclick="showPlant()">&larr; Back to plant</span>
+    <div class="detail-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-title" id="machine-title">Vibration — Kiln Drive Motor</div>
+          <div class="chart-area" id="chart-area"></div>
+          <div class="axis-labels"><span>-30d</span><span>-20d</span><span>-10d</span><span>Today</span></div>
+        </div>
+
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-title">Live Sensor Readings</div>
+          <div class="sensor-strip">
+            <div class="sensor-mini"><div class="sl">Vibration RMS</div><div class="sv warn">7.8 mm/s</div></div>
+            <div class="sensor-mini"><div class="sl">Bearing Temp</div><div class="sv">68 °C</div></div>
+            <div class="sensor-mini"><div class="sl">Motor Current</div><div class="sv">142 A</div></div>
+            <div class="sensor-mini"><div class="sl">Axial Play</div><div class="sv warn">0.9 mm</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-title">Remaining Useful Life</div>
+          <div class="rul-hero">
+            <div class="value">18</div>
+            <div class="unit">days remaining (P50 estimate)</div>
+          </div>
+          <div class="rul-runway-big">
+            <div class="rul-track" style="position:absolute; inset:0; border-radius:7px; background:linear-gradient(90deg, var(--crit) 0%, var(--watch) 40%, var(--ok) 100%); opacity:0.3;"></div>
+            <div class="rul-marker-big" style="left:22%;"></div>
+          </div>
+          <div class="rul-scale"><span>0d critical</span><span>30d</span><span>60d+ healthy</span></div>
+        </div>
+
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-title">Detected Defect</div>
+          <div class="defect-card">
+            <div class="dt">Bearing outer-race spall — DE bearing</div>
+            <div class="dd">Elevated 3× harmonic amplitude in vibration spectrum consistent with early-stage outer race defect. Trend accelerating over last 9 days.</div>
+            <div class="confidence">Model confidence: 91% · Pattern match: ISO 10816 + historical fleet cases</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-title">Recommendation</div>
+          <div class="rec-card">
+            <div class="rec-icon">&#128295;</div>
+            <div>
+              <div class="rec-title">Schedule bearing replacement within 2 weeks</div>
+              <div class="rec-body">Plan replacement during next planned stop to avoid unplanned downtime. Order part FAG-22320 in advance — average lead time 9 days.</div>
+              <div class="rec-priority">Priority: High</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const plants = [
+  {id:'p1', name:'Al-Minya Plant', loc:'Upper Egypt', machines:26, status:'crit', alerts:2},
+  {id:'p2', name:'Suez Terminal', loc:'Suez Governorate', machines:19, status:'watch', alerts:3},
+  {id:'p3', name:'Assiut Works', loc:'Assiut', machines:24, status:'ok', alerts:0},
+  {id:'p4', name:'Beni Suef Plant', loc:'Beni Suef', machines:31, status:'watch', alerts:4},
+  {id:'p5', name:'Qena Facility', loc:'Qena', machines:22, status:'crit', alerts:1},
+  {id:'p6', name:'Sohag Site', loc:'Sohag', machines:20, status:'ok', alerts:0},
+];
+
+const machinesByPlant = {
+  p1: [
+    {name:'Kiln Drive Motor #1', type:'Rotary Kiln — Drive Train', status:'crit', rul:18, rulPct:22, defect:'Bearing outer-race spall'},
+    {name:'Raw Mill Fan', type:'Vertical Roller Mill', status:'watch', rul:41, rulPct:55, defect:'Imbalance — moderate'},
+    {name:'Cooler Grate Drive', type:'Clinker Cooler', status:'ok', rul:92, rulPct:88, defect:'None detected'},
+    {name:'Preheater Fan #2', type:'ID Fan', status:'watch', rul:37, rulPct:48, defect:'Misalignment trend'},
+  ],
+  p2: [
+    {name:'Cement Mill Gearbox', type:'Ball Mill', status:'watch', rul:29, rulPct:38, defect:'Gear mesh wear'},
+    {name:'Coal Mill Motor', type:'Vertical Roller Mill', status:'ok', rul:120, rulPct:95, defect:'None detected'},
+  ],
+  p3: [
+    {name:'Kiln Support Roller', type:'Rotary Kiln', status:'ok', rul:150, rulPct:97, defect:'None detected'},
+  ],
+  p4: [
+    {name:'Baghouse Fan', type:'Dust Collection', status:'watch', rul:33, rulPct:42, defect:'Bearing temp rising'},
+  ],
+  p5: [
+    {name:'Raw Mill Motor', type:'Vertical Roller Mill', status:'crit', rul:9, rulPct:11, defect:'Winding insulation degradation'},
+  ],
+  p6: [
+    {name:'Packer Drive', type:'Cement Packer', status:'ok', rul:180, rulPct:99, defect:'None detected'},
+  ],
+};
+
+let currentPlant = null;
+
+function statusColorVar(s){ return s === 'crit' ? 'var(--crit)' : s === 'watch' ? 'var(--watch)' : 'var(--ok)'; }
+
+function renderPlants(){
+  const grid = document.getElementById('plant-grid');
+  grid.innerHTML = plants.map(p => `
+    <div class="plant-card" onclick="showPlant('${p.id}')">
+      <div class="status-bar" style="background:${statusColorVar(p.status)}"></div>
+      <div class="plant-top">
+        <div>
+          <div class="plant-name">${p.name}</div>
+          <div class="plant-loc">${p.loc}</div>
+        </div>
+        <div class="badge ${p.status}">${p.status === 'crit' ? 'Critical' : p.status === 'watch' ? 'Watch' : 'Healthy'}</div>
+      </div>
+      <div class="plant-meta">
+        <div>Machines <br><b>${p.machines}</b></div>
+        <div>Monitored <br><b>100%</b></div>
+      </div>
+      <div class="plant-alerts ${p.alerts === 0 ? 'none' : ''}">${p.alerts > 0 ? '&#9888; ' + p.alerts + ' active alert' + (p.alerts>1?'s':'') : 'No active alerts'}</div>
+    </div>
+  `).join('');
+}
+
+function showFleet(){
+  document.getElementById('view-fleet').classList.remove('hidden');
+  document.getElementById('view-plant').classList.add('hidden');
+  document.getElementById('view-machine').classList.add('hidden');
+  document.getElementById('crumbs').innerHTML = `<span class="active" onclick="showFleet()">All Plants</span>`;
+}
+
+function showPlant(id){
+  if(id) currentPlant = id;
+  const plant = plants.find(p => p.id === currentPlant);
+  document.getElementById('view-fleet').classList.add('hidden');
+  document.getElementById('view-plant').classList.remove('hidden');
+  document.getElementById('view-machine').classList.add('hidden');
+  document.getElementById('plant-heading').textContent = plant.name + ' — Machines';
+  document.getElementById('crumbs').innerHTML = `<span onclick="showFleet()">All Plants</span><span class="sep">/</span><span class="active">${plant.name}</span>`;
+
+  const list = machinesByPlant[currentPlant] || [];
+  document.getElementById('machine-list').innerHTML = list.map((m, idx) => `
+    <div class="machine-row" onclick="showMachine(${idx})">
+      <div>
+        <div class="m-name">${m.name}</div>
+        <div class="m-type">${m.type}</div>
+      </div>
+      <div class="status-pill"><span class="dot ${m.status}"></span>${m.status === 'crit' ? 'Critical' : m.status === 'watch' ? 'Watch' : 'Healthy'}</div>
+      <div>
+        <div class="rul-runway"><div class="rul-track"></div><div class="rul-marker" style="left:${m.rulPct}%; background:${statusColorVar(m.status)}"></div></div>
+        <div class="rul-label"><b>${m.rul}d</b> remaining</div>
+      </div>
+      <div class="defect-tag">${m.defect}</div>
+      <div class="chevron">&#8250;</div>
+    </div>
+  `).join('');
+}
+
+function showMachine(idx){
+  const m = machinesByPlant[currentPlant][idx];
+  document.getElementById('view-plant').classList.add('hidden');
+  document.getElementById('view-machine').classList.remove('hidden');
+  document.getElementById('machine-title').textContent = 'Vibration Trend — ' + m.name;
+
+  const bars = document.getElementById('chart-area');
+  let html = '';
+  for(let i=0;i<40;i++){
+    const h = 20 + Math.sin(i/4)*10 + i*1.3 + (Math.random()*8);
+    const hi = i > 32;
+    html += `<div class="bar ${hi?'hi':''}" style="height:${Math.min(h,170)}px"></div>`;
+  }
+  bars.innerHTML = html;
+
+  const plant = plants.find(p => p.id === currentPlant);
+  document.getElementById('crumbs').innerHTML = `<span onclick="showFleet()">All Plants</span><span class="sep">/</span><span onclick="showPlant()">${plant.name}</span><span class="sep">/</span><span class="active">${m.name}</span>`;
+}
+
+renderPlants();
+showFleet();
+</script>
+
+</body>
+</html>
